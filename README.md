@@ -22,7 +22,7 @@ $env:CAMPUS_STUDENT_TOKENS = @{ participant = $participantToken } | ConvertTo-Js
 
 ## 原型演示
 
-在项目目录运行 `python -m app.demo`，打开 [演示页面](http://127.0.0.1:8765/)。脚本通过业务接口向独立的临时 SQLite 数据库写入 20 个社团、120 场活动、40 个场地和 50 条有效报名。场地包含普通教室、实验教室、舞台、报告厅及会议室。退出时清理。演示账号及样例来源见[系统设计报告](docs/design-report.md)。
+安装依赖后，在 Windows 项目目录运行 `.\.venv\Scripts\python.exe -m app.demo`，再打开 [演示页面](http://127.0.0.1:8765/)。脚本通过业务接口向独立的临时 SQLite 数据库写入 20 个社团、120 场活动、40 个场地和 50 条有效报名。场地包含普通教室、实验教室、舞台、报告厅及会议室。退出时清理。完整操作步骤和 Linux 启动方式见[系统操作说明书](docs/user-manual.md)。
 
 - 用 `demo-admin` 登录，在「场地 → 替代场地协调」选择「校级考试临时征用」，查看两场活动的自动建议并确认。在「统计」查询已写入的业务数据。
 - 用 `demo-student` 登录，在「场地 → 申请场地」选「网页设计入门课」，筛选可用场地并申请。在「学分」可查询 Python 入门工作坊的 1 学分。真实 AI 生成需要服务端配置 DeepSeek 密钥，演示数据本身不调用模型。
@@ -55,4 +55,5 @@ Remove-Item Env:RUN_DEEPSEEK_LIVE
 - [本阶段验收记录](docs/acceptance.md)
 - [需求分析报告草稿](docs/requirements-report.md)
 - [系统设计报告草稿](docs/design-report.md)
+- [系统操作说明书](docs/user-manual.md)
 - [TRAE 开发任务及留存时点](docs/trae-task.md)
