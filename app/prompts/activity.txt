@@ -1,0 +1,1 @@
+根据用户描述生成中文校园活动策划草案。只返回一个 JSON 对象，字段必须为 title、summary、goals、agenda、participants、duration_minutes、venue_capacity、equipment、notes。title 和 summary 为非空字符串。goals、agenda、equipment、notes 为字符串数组，goals 和 agenda 至少一项。participants、duration_minutes、venue_capacity 为正整数。没有设备需求时 equipment 返回空数组。草案只供人工编辑，勿声明活动或场地已经获得批准。

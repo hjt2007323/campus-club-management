@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>高校社团活动全流程管理系统</title>
+  <link rel="stylesheet" href="/static/vendor/bootstrap.min.css">
+  <link rel="stylesheet" href="/static/campus.css">
+  <script src="/static/campus.js" defer></script>
+</head>
+<body>
+<header class="masthead">
+  <div class="workspace masthead-content">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">社</span>
+      <h1>高校社团活动全流程管理系统</h1>
+    </div>
+    <form id="login" class="session-form">
+      <label class="visually-hidden" for="token">演示账号令牌</label>
+      <input id="token" type="password" class="form-control form-control-sm" placeholder="演示账号令牌" autocomplete="off" required>
+      <button type="submit" class="btn btn-light btn-sm">切换账号</button>
+      <button type="button" id="logout" class="btn btn-outline-light btn-sm" hidden>退出</button>
+    </form>
+  </div>
+</header>
+<div class="workspace">
+  <div class="context">
+    <nav aria-label="功能模块" class="module-nav">
+      <button type="button" data-tab="clubs" aria-controls="clubs" aria-current="page">社团</button>
+      <button type="button" data-tab="activities" aria-controls="activities">活动</button>
+      <button type="button" data-tab="venues" aria-controls="venues">场地</button>
+      <button type="button" data-tab="credits" aria-controls="credits">学分</button>
+      <button type="button" data-tab="evaluations" aria-controls="evaluations">评价</button>
+      <button type="button" data-tab="statistics" aria-controls="statistics">统计</button>
+    </nav>
+    <div id="account" class="account">访客</div>
+  </div>
+  <div id="feedback" role="status" aria-live="polite" hidden></div>
+  <main>
+    <section id="clubs" class="page">
+      <h2>社团管理</h2>
+      <section class="panel" ><h3>已通过审核的社团</h3><div id="clubs-table" class="table-responsive"></div></section>
+      <div class="panels">
+        <form id="club-apply" class="panel" data-role="student" hidden><h3>申请成立社团</h3><label class="field" for="club-name"><span>社团名称</span><input id="club-name" class="form-control" required maxlength="200"></label><button class="btn btn-primary" type="submit">提交申请</button></form>
+        <form id="club-review" class="panel" data-role="admin" hidden><h3>社团申请审核</h3><div class="controls"><label class="field" for="review-club"><span>待审核社团</span><select class="form-select" id="review-club" required></select></label><label class="field" for="club-decision"><span>处理结果</span><select id="club-decision" class="form-select"><option value="approved">通过</option><option value="rejected">退回</option></select></label></div><button class="btn btn-primary" type="submit">保存审核结果</button></form>
+      </div>
+      <section class="panel" data-role="signed" hidden><h3>社团申请与审核状态</h3><div id="managed-clubs-table" class="table-responsive"></div></section>
+      <form id="annual-submit" class="panel" data-role="student" hidden><h3>提交社团年审</h3><div class="controls"><label class="field" for="annual-club"><span>社团</span><select class="form-select" id="annual-club" required></select></label><label class="field" for="annual-year"><span>年审年份</span><input id="annual-year" class="form-control" required type="number" min="2000" max="9999"></label></div><label class="field" for="annual-materials"><span>年审材料</span><textarea id="annual-materials" class="form-control" rows="4" maxlength="2000" required></textarea></label><button class="btn btn-primary" type="submit">提交年审</button></form>
+      <form id="annual-load" class="panel" data-role="signed" hidden><h3>查询社团年审</h3><div class="controls"><label class="field" for="annual-filter"><span>社团</span><select class="form-select" id="annual-filter" required></select></label><button class="btn btn-outline-primary" type="submit">查看年审</button></div><div id="annual-table" class="table-responsive"></div></form>
+      <form id="annual-review" class="panel" data-role="admin" hidden><h3>处理年审</h3><div class="controls"><label class="field" for="annual-review-id"><span>待处理年审</span><select class="form-select" id="annual-review-id" required></select></label><label class="field" for="annual-decision"><span>处理结果</span><select id="annual-decision" class="form-select"><option value="approved">通过</option><option value="rejected">退回</option></select></label></div><button class="btn btn-primary" type="submit">保存年审结果</button></form>
+    </section>
+
+    <section id="activities" class="page" hidden>
+      <h2>活动管理</h2>
+      <section class="panel" ><h3>公开活动</h3><div id="activities-table" class="table-responsive"></div></section>
+      <form id="registration" class="panel" data-role="student" hidden><h3>活动报名</h3><label class="field" for="register-activity"><span>活动</span><select class="form-select" id="register-activity" required></select></label><div class="controls"><button class="btn btn-primary" type="submit">报名</button><button id="cancel-registration" class="btn btn-outline-primary" type="button">取消报名</button></div><div id="registration-table" class="table-responsive"></div></form>
+      <section class="panel" data-role="signed" hidden><h3>草稿与审批记录</h3><div id="managed-activities-table" class="table-responsive"></div></section>
+      <form id="draft" class="panel" data-role="student" hidden><h3>活动策划与草稿</h3><div class="controls"><label class="field" for="draft-club"><span>主办社团</span><select class="form-select" id="draft-club" required></select></label><label class="field" for="draft-id"><span>草稿</span><select class="form-select" id="draft-id" ></select></label></div><label class="field" for="description"><span>活动构想</span><textarea id="description" class="form-control" rows="3" maxlength="2000"></textarea></label><button id="generate-plan" class="btn btn-outline-primary" type="button">用 DeepSeek 生成草案</button><label class="field" for="plan-title"><span>活动名称</span><input id="plan-title" class="form-control" required maxlength="200"></label><label class="field" for="plan-summary"><span>活动简介</span><textarea id="plan-summary" class="form-control" rows="2" maxlength="2000" required></textarea></label><div class="controls"><label class="field" for="plan-participants"><span>报名人数上限</span><input id="plan-participants" class="form-control" required type="number" min="1"></label><label class="field" for="plan-duration"><span>计划时长（分钟）</span><input id="plan-duration" class="form-control" required type="number" min="1"></label><label class="field" for="plan-capacity"><span>所需场地容量</span><input id="plan-capacity" class="form-control" required type="number" min="1"></label></div><div class="controls"><label class="field" for="plan-goals"><span>活动目标（每行一项）</span><textarea id="plan-goals" class="form-control" rows="3" required></textarea></label><label class="field" for="plan-agenda"><span>活动流程（每行一项）</span><textarea id="plan-agenda" class="form-control" rows="3" required></textarea></label></div><div class="controls"><label class="field" for="plan-equipment"><span>场地设备（每行一项）</span><textarea id="plan-equipment" class="form-control" rows="3"></textarea></label><label class="field" for="plan-notes"><span>注意事项（每行一项）</span><textarea id="plan-notes" class="form-control" rows="3"></textarea></label></div><button class="btn btn-primary" type="submit">人工确认并保存草稿</button></form>
+      <form id="activity-submit" class="panel" data-role="student" hidden><h3>提交活动审批</h3><label class="field" for="submit-activity"><span>待提交活动</span><select class="form-select" id="submit-activity" required></select></label><div class="controls"><label class="field" for="semester"><span>学期</span><input id="semester" class="form-control" required maxlength="200" placeholder="如 2026 秋"></label><label class="field" for="category"><span>活动类型</span><input id="category" class="form-control" required maxlength="200"></label></div><div class="controls"><label class="field" for="activity-start"><span>开始时间</span><input id="activity-start" class="form-control" required type="datetime-local"></label><label class="field" for="activity-end"><span>结束时间</span><input id="activity-end" class="form-control" required type="datetime-local"></label></div><button class="btn btn-primary" type="submit">提交审批</button></form>
+      <form id="activity-review" class="panel" data-role="admin" hidden><h3>活动审批</h3><div class="controls"><label class="field" for="review-activity"><span>待审批活动</span><select class="form-select" id="review-activity" required></select></label><label class="field" for="activity-decision"><span>处理结果</span><select id="activity-decision" class="form-select"><option value="approved">通过</option><option value="rejected">退回</option></select></label><label class="field" for="activity-priority"><span>协调优先级（0–5）</span><input id="activity-priority" class="form-control" type="number" min="0" max="5" value="0" required></label></div><button class="btn btn-primary" type="submit">保存审批结果</button></form>
+      <form id="attendance" class="panel" data-role="admin" hidden><h3>报名名单与签到</h3><div class="controls"><label class="field" for="attendance-activity"><span>活动</span><select class="form-select" id="attendance-activity" required></select></label><button id="load-roster" class="btn btn-outline-primary" type="button">查看有效报名</button></div><div id="roster-table" class="table-responsive"></div><label class="field" for="attendance-student"><span>待签到学生</span><select class="form-select" id="attendance-student" required></select></label><button class="btn btn-primary" type="submit">登记签到</button></form>
+      <form id="activity-complete" class="panel" data-role="admin" hidden><h3>确认活动完成</h3><label class="field" for="complete-activity"><span>已审批活动</span><select class="form-select" id="complete-activity" required></select></label><button class="btn btn-primary" type="submit">完成活动并认定学分</button></form>
+    </section>
+
+    <section id="venues" class="page" hidden>
+      <h2>场地管理</h2>
+      <section class="panel" ><h3>场地与设备</h3><div id="venues-table" class="table-responsive"></div></section>
+      <form id="venue-edit" class="panel" data-role="admin" hidden><h3>维护场地</h3><label class="field" for="venue-edit-id"><span>场地</span><select class="form-select" id="venue-edit-id" ></select></label><div class="controls"><label class="field" for="venue-name"><span>场地名称</span><input id="venue-name" class="form-control" required maxlength="200"></label><label class="field" for="venue-capacity"><span>容量</span><input id="venue-capacity" class="form-control" required type="number" min="1"></label></div><label class="field" for="venue-equipment"><span>设备（每行一项）</span><textarea id="venue-equipment" class="form-control" rows="3"></textarea></label><button class="btn btn-primary" type="submit">保存场地</button></form>
+      <form id="venue-reserve" class="panel" data-role="student" hidden><h3>申请场地</h3><div class="controls"><label class="field" for="reserve-activity"><span>已审批活动</span><select class="form-select" id="reserve-activity" required></select></label><button id="load-venue-options" class="btn btn-outline-primary" type="button">筛选可用场地</button></div><label class="field" for="reserve-venue"><span>预约场地</span><select class="form-select" id="reserve-venue" required></select></label><button class="btn btn-primary" type="submit">提交场地预约</button></form>
+      <section class="panel" data-role="signed" hidden><h3>预约与征用状态</h3><div id="reservations-table" class="table-responsive"></div></section>
+      <form id="reservation-review" class="panel" data-role="admin" hidden><h3>处理场地预约</h3><div class="controls"><label class="field" for="review-reservation"><span>预约</span><select class="form-select" id="review-reservation" required></select></label><label class="field" for="reservation-decision"><span>处理结果</span><select id="reservation-decision" class="form-select"><option value="approved">通过</option><option value="rejected">退回</option></select></label></div><button class="btn btn-primary" type="submit">处理预约</button></form>
+      <form id="venue-block" class="panel" data-role="admin" hidden><h3>学校临时征用</h3><label class="field" for="block-venues"><span>征用场地（可多选）</span><select class="form-select" id="block-venues" multiple size="4" required></select></label><div class="controls"><label class="field" for="block-start"><span>开始时间</span><input id="block-start" class="form-control" required type="datetime-local"></label><label class="field" for="block-end"><span>结束时间</span><input id="block-end" class="form-control" required type="datetime-local"></label></div><label class="field" for="block-reason"><span>征用原因</span><textarea id="block-reason" class="form-control" required rows="2" maxlength="2000"></textarea></label><button class="btn btn-primary" type="submit">登记征用</button></form>
+      <form id="venue-coordinate" class="panel" data-role="admin" hidden><h3>替代场地协调</h3><div class="controls"><label class="field" for="block-id"><span>征用记录</span><select class="form-select" id="block-id" required></select></label><button id="load-coordination" class="btn btn-outline-primary" type="button">查看候选与建议</button></div><div id="coordination-list" class="table-responsive"></div><button id="confirm-coordination" class="btn btn-primary" type="submit" disabled>人工确认所选场地</button></form>
+    </section>
+
+    <section id="credits" class="page" hidden>
+      <h2>学分管理</h2>
+      <p class="muted">报名有效且已签到的学生，在管理员确认活动完成后获得学分。</p>
+      <form id="credit-load" class="panel" data-role="student" hidden><h3>我的学分</h3><div class="controls"><label class="field" for="credit-semester"><span>学期</span><input id="credit-semester" class="form-control" maxlength="200" placeholder="留空查看全部"></label><button class="btn btn-outline-primary" type="submit">查询学分</button></div><div id="credit-table" class="table-responsive"></div></form>
+      <form id="credit-rule" class="panel" data-role="admin" hidden><h3>配置活动学分</h3><div class="controls"><label class="field" for="credit-activity"><span>活动</span><select class="form-select" id="credit-activity" required></select></label><label class="field" for="credit-amount"><span>学分值</span><input id="credit-amount" class="form-control" type="number" min="0.01" max="999.99" step="0.01" value="1" required></label></div><button class="btn btn-primary" type="submit">保存学分规则</button></form>
+    </section>
+
+    <section id="evaluations" class="page" hidden>
+      <h2>活动评价</h2>
+      <p class="muted">活动完成后，已签到的参与者可提交一次评价。</p>
+      <form id="evaluation-submit" class="panel" data-role="student" hidden><h3>提交活动评价</h3><label class="field" for="evaluation-activity"><span>已参与活动</span><select class="form-select" id="evaluation-activity" required></select></label><label class="field" for="evaluation-rating"><span>评分（1–5）</span><input id="evaluation-rating" class="form-control" type="number" min="1" max="5" value="5" required></label><label class="field" for="evaluation-comment"><span>文字评价（选填）</span><textarea id="evaluation-comment" class="form-control" rows="3" maxlength="2000"></textarea></label><button class="btn btn-primary" type="submit">提交评价</button></form>
+      <form id="evaluation-load" class="panel" data-role="admin" hidden><h3>查阅活动评价</h3><div class="controls"><label class="field" for="evaluation-filter"><span>活动</span><select class="form-select" id="evaluation-filter" required></select></label><button class="btn btn-outline-primary" type="submit">查看评价</button></div><div id="evaluation-table" class="table-responsive"></div></form>
+    </section>
+
+    <section id="statistics" class="page" hidden>
+      <h2>统计管理</h2>
+      <p data-role="guest student" class="muted">请使用管理员账号查看统计。</p>
+      <form id="statistics-load" class="panel" data-role="admin" hidden><h3>活动与参与统计</h3><div class="controls"><label class="field" for="stats-semester"><span>学期</span><input id="stats-semester" class="form-control" maxlength="200" placeholder="留空查看全部"></label><button class="btn btn-outline-primary" type="submit">查询统计</button></div><div id="statistics-summary" class="metrics"></div><div id="statistics-tables"></div></form>
+    </section>
+  </main>
+  <footer><a href="/docs">API 文档</a></footer>
+</div>
+</body>
+</html>
