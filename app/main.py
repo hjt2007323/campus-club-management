@@ -1,21 +1,20 @@
 import logging
 import os
 from contextlib import asynccontextmanager
-from pathlib import Path
 
 from fastapi import FastAPI, Request
-from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError, OperationalError, SQLAlchemyError
 
 from .access import SignedIn, browser_actor, configured_accounts
 from .database import Db, sqlite_engine
+from .frontend import PAGE_HEADERS, STATIC_DIR, frontend_page, router as frontend_router
 from .models import Base
 from .routers import activities, clubs, outcomes, session, venues
 
 logger = logging.getLogger(__name__)
-APP_DIR = Path(__file__).resolve().parent
 
 
 def create_app(database_url: str | None = None, *, demo_login: bool = False) -> FastAPI:
@@ -34,20 +33,19 @@ def create_app(database_url: str | None = None, *, demo_login: bool = False) -> 
 
     app = FastAPI(title="高校社团活动全流程管理系统", lifespan=lifespan)
     app.state.demo_login = demo_login
-    app.mount("/static", StaticFiles(directory=APP_DIR / "static"), name="static")
-    for router in (session.router, clubs.router, activities.router, venues.router, outcomes.router):
+    app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+    for router in (frontend_router, session.router, clubs.router, activities.router, venues.router, outcomes.router):
         app.include_router(router)
 
     @app.get("/", include_in_schema=False)
     async def homepage(request: Request, guest: bool = False):
-        headers = {"Cache-Control": "no-store"}
         if demo_login and not guest and browser_actor(request) is None:
-            return RedirectResponse("/login", status_code=303, headers=headers)
-        return FileResponse(APP_DIR / "index.html", headers=headers)
+            return RedirectResponse("/login", status_code=303, headers=PAGE_HEADERS)
+        return frontend_page("index.html")
 
     @app.get("/login", include_in_schema=False)
     async def login_page():
-        return FileResponse(APP_DIR / "login.html", headers={"Cache-Control": "no-store"})
+        return frontend_page("login.html")
 
     @app.get("/health")
     def health(db: Db):
