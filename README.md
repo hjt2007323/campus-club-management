@@ -22,10 +22,10 @@ $env:CAMPUS_STUDENT_TOKENS = @{ participant = $participantToken } | ConvertTo-Js
 
 ## 原型演示
 
-在项目目录运行 `python -m app.demo`，打开 [演示页面](http://127.0.0.1:8765/)。脚本通过业务接口向独立的临时 SQLite 数据库写入 2 个社团、3 场活动和 4 个场地，退出时清理，不影响普通启动使用的 `campus.db`。
+在项目目录运行 `python -m app.demo`，打开 [演示页面](http://127.0.0.1:8765/)。脚本通过业务接口向独立的临时 SQLite 数据库写入 2 个社团、4 场活动和 4 个场地，退出时清理，不影响普通启动使用的 `campus.db`。
 
 - 用 `demo-admin` 登录，在「场地 → 替代场地协调」选择「校级考试临时征用」，查看两场活动的自动建议并确认。在「统计」查询已写入的业务数据。
-- 用 `demo-student` 登录，在「学分」查询 Python 入门工作坊的 1 学分。真实 AI 生成需要服务端配置 DeepSeek 密钥，演示数据本身不调用模型。
+- 用 `demo-student` 登录，在「场地 → 申请场地」选「网页设计入门课」，筛选可用场地并申请。在「学分」可查询 Python 入门工作坊的 1 学分。真实 AI 生成需要服务端配置 DeepSeek 密钥，演示数据本身不调用模型。
 
 ## 从空数据库演示
 

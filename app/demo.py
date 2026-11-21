@@ -81,6 +81,7 @@ def seed(app):
 
         first = activity(programming, owner, "校园编程分享会", ["投影"], future)
         second = activity(network, other, "网络实验体验课", ["网络"], future)
+        bookable = activity(programming, owner, "网页设计入门课", ["投影"], future + timedelta(days=1))
         reserve(first, original_a, owner)
         reserve(second, original_b, other)
         block = call("/venue-blocks", {
@@ -94,7 +95,10 @@ def seed(app):
         if suggested != expected:
             raise RuntimeError("演示协调建议与预期不符")
         stats = call("/statistics", method="GET")
-        if (stats["activity_count"], stats["credit_total"]) != (3, 1):
+        options = call(f"/activities/{bookable}/venue-options", token=owner, method="GET")
+        if spare not in {room["id"] for room in options}:
+            raise RuntimeError("演示活动没有可预约的备用投影教室")
+        if (stats["activity_count"], stats["credit_total"]) != (4, 1):
             raise RuntimeError("演示数据库统计与预期不符")
 
     app.dependency_overrides.clear()

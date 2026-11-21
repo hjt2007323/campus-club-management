@@ -65,6 +65,7 @@ function action(id, eventName, handler) {
     } finally {
       if (isButton && target.id !== "confirm-coordination") target.disabled = false;
       updateConfirm();
+      updateReservationControls();
       busy = false;
     }
   });
@@ -239,7 +240,9 @@ function renderActivities() {
     "evaluation-filter": managed.filter(row => row.status === "completed"),
   };
   for (const [id, options] of Object.entries(choices)) {
-    labelOptions(id, options, row => row.plan.title, id === "draft-id" ? "新建草稿" : "请选择");
+    const prompt = id === "draft-id" ? "新建草稿"
+      : id === "reserve-activity" && !options.length ? "暂无可预约的活动" : "请选择";
+    labelOptions(id, options, row => row.plan.title, prompt);
   }
 }
 
@@ -257,6 +260,7 @@ function renderVenues() {
   labelOptions("review-reservation", state.reservations.filter(row => ["pending", "affected"].includes(row.status)),
     row => activityName(row.activity_id) + " · " + roomName(row.venue_id) + " · " + statusLabel(row.status));
   labelOptions("block-id", state.blocks, row => row.reason + " · " + formatDate(row.starts_at));
+  updateReservationControls();
 }
 
 form("club-apply", async () => {
@@ -399,7 +403,17 @@ form("venue-edit", async () => {
   await refresh();
   return "场地已保存";
 });
-el("reserve-activity").addEventListener("change", () => labelOptions("reserve-venue", state.rooms, row => row.name));
+function updateReservationControls() {
+  const selected = Boolean(value("reserve-activity"));
+  el("load-venue-options").disabled = !selected;
+  el("reserve-venue").disabled = !selected;
+  el("venue-reserve").querySelector('button[type="submit"]').disabled = !selected;
+}
+
+el("reserve-activity").addEventListener("change", () => {
+  labelOptions("reserve-venue", state.rooms, row => row.name);
+  updateReservationControls();
+});
 click("load-venue-options", async () => {
   const options = await api("/activities/" + idOf("reserve-activity") + "/venue-options");
   labelOptions("reserve-venue", options, row => row.name);
