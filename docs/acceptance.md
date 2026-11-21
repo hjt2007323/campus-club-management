@@ -49,8 +49,8 @@
 | D04 | 常规回归 10 项通过，批量匹配专项 8 项通过 |
 | D05 | 已验证 `/docs` 和 `/openapi.json` 可访问，接口定义包含活动完成、场地协调和统计 |
 | D06 | 密钥走服务端环境变量，仓库忽略本机配置和数据库 |
-| D07 | 本地 Git 已初始化。Gitee 链接和真实提交编号待补 |
+| D07 | 项目使用 [GitHub 仓库](https://github.com/hjt2007323/campus-club-management)，原型代码基准提交为 [59d6e38](https://github.com/hjt2007323/campus-club-management/commit/59d6e388c3d5a2388feb014a51dbf0eca12c8811) |
 | D08 | 已留存 TRAE 任务输入、实现说明和测试汇报。原图见[系统设计报告附录](design-report.md#附录-trae-开发记录) |
 | D09 | 已记录真实 DeepSeek 响应及用量 |
 | D10 | 活动与 AI 场景已经浏览器验证，场地批量建议和确认通过接口验证 |
-| D11 | 两份草稿已对应原型，系统设计报告附有 TRAE 证据。Gitee 信息待补 |
+| D11 | 两份草稿已对应原型，系统设计报告的 TRAE 原图随本地报告留存。仓库链接与原型代码基准提交已记录 |
