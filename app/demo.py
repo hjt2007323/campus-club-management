@@ -1,6 +1,7 @@
 """Run a disposable local demo populated through the business API."""
 
 import argparse
+import json
 import os
 from datetime import UTC, datetime, timedelta
 from tempfile import TemporaryDirectory
@@ -20,7 +21,10 @@ def main():
     os.environ.update(
         CAMPUS_ADMIN_TOKEN="demo-admin",
         CAMPUS_STUDENT_TOKEN="demo-student",
-        CAMPUS_STUDENT_TOKENS='{"network-club":"demo-network"}',
+        CAMPUS_STUDENT_TOKENS=json.dumps({
+            "network-club": "demo-network",
+            **{f"sample-{i:02}": f"demo-club-{i:02}" for i in range(1, 19)},
+        }),
     )
     with TemporaryDirectory(prefix="campus-demo-") as directory:
         path = Path(directory, "demo.db").as_posix()
@@ -48,8 +52,8 @@ def seed(app):
             call(f"/clubs/{number}/review", {"status": "approved"})
             return number
 
-        def venue(name, equipment):
-            return call("/venues", {"name": name, "capacity": 40, "equipment": equipment})["id"]
+        def venue(name, equipment, capacity=40):
+            return call("/venues", {"name": name, "capacity": capacity, "equipment": equipment})["id"]
 
         def activity(club_id, actor, title, equipment, time, category="实践", source=None):
             summary = "课程演示数据"
@@ -108,6 +112,37 @@ def seed(app):
         bookable = activity(programming, owner, "网页设计入门课", ["投影"], future + timedelta(days=1))
         reserve(first, original_a, owner)
         reserve(second, original_b, other)
+        venue_groups = [
+            ("普通教室", 12, 50, ["白板"]),
+            ("实验教室", 6, 32, ["实验台"]),
+            ("舞台", 6, 160, ["舞台灯光", "舞台音响"]),
+            ("报告厅", 6, 180, ["讲台", "无线麦克风"]),
+            ("会议室", 6, 24, ["会议白板"]),
+        ]
+        rooms = []
+        for kind, count, capacity, equipment in venue_groups:
+            for room_number in range(1, count + 1):
+                room_id = venue(f"{kind} {room_number:02d}", equipment, capacity)
+                rooms.append((room_id, equipment))
+
+        names = ("摄影", "辩论", "戏剧", "志愿服务", "书法", "科普", "音乐", "机器人", "心理健康",
+                 "英语交流", "舞蹈", "创客", "环保", "职业发展", "读书", "设计", "演讲", "校园媒体")
+        sessions = (("入门体验", "工作坊"), ("案例分享", "讲座"), ("小组实践", "实践"),
+                    ("社团交流", "交流"), ("成果展演", "展演"), ("专题报告", "讲座"))
+        for club_index, name in enumerate(names, start=1):
+            actor = f"demo-club-{club_index:02}"
+            club_id = club(f"{name}社", actor)
+            for session_index, (topic, category) in enumerate(sessions):
+                room, equipment = rooms[(2 * (club_index - 1) + session_index) % len(rooms)]
+                if topic == "成果展演":
+                    room, equipment = rooms[18 + (club_index - 1) % 6]
+                elif topic == "专题报告":
+                    room, equipment = rooms[24 + (club_index - 1) % 6]
+                starts = future + timedelta(days=12 + (club_index - 1) * len(sessions) + session_index)
+                sample = activity(club_id, actor, f"{name}社 · {topic}", equipment, starts, category)
+                reserve(sample, room, actor)
+                if club_index <= 15 and session_index < 3:
+                    call(f"/activities/{sample}/registration", token=actor, method="PUT")
         block = call("/venue-blocks", {
             "venue_ids": [original_a, original_b], "reason": "校级考试临时征用",
             "starts_at": future.replace(tzinfo=UTC).isoformat(),
@@ -122,7 +157,9 @@ def seed(app):
         options = call(f"/activities/{bookable}/venue-options", token=owner, method="GET")
         if spare not in {room["id"] for room in options}:
             raise RuntimeError("演示活动没有可预约的备用投影教室")
-        if (stats["activity_count"], stats["registrations"], stats["credit_total"]) != (12, 5, 1):
+        clubs = call("/clubs", method="GET")
+        venues = call("/venues", method="GET")
+        if (len(clubs), stats["activity_count"], len(venues), stats["registrations"], stats["credit_total"]) != (20, 120, 40, 50, 1):
             raise RuntimeError("演示数据库统计与预期不符")
 
     app.dependency_overrides.clear()
