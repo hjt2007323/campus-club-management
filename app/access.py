@@ -3,6 +3,7 @@ import os
 import re
 from dataclasses import dataclass
 from hmac import compare_digest
+from time import monotonic
 from typing import Annotated
 
 from fastapi import Depends, HTTPException, Request
@@ -40,13 +41,47 @@ def configured_accounts() -> dict[str, Actor]:
     return accounts
 
 
-def identity(request: Request, credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer)]):
-    if credentials:
-        token = credentials.credentials.encode()
-        for configured, actor in request.app.state.accounts.items():
-            if compare_digest(token, configured.encode()):
+def account_for_token(token: str, accounts: dict[str, Actor]) -> Actor | None:
+    token_bytes = token.encode()
+    for configured, actor in accounts.items():
+        if compare_digest(token_bytes, configured.encode()):
+            return actor
+    return None
+
+
+def session_cookie_name(request: Request) -> str:
+    default_port = 443 if request.url.scheme == "https" else 80
+    return f"campus_session_{request.url.port or default_port}"
+
+
+def browser_actor(request: Request) -> Actor | None:
+    session_id = request.cookies.get(session_cookie_name(request))
+    if session_id:
+        session = request.app.state.browser_sessions.get(session_id)
+        if session:
+            actor, expires_at = session
+            if expires_at > monotonic():
                 return actor
-    raise HTTPException(401, "请提供有效的演示账号令牌", headers={"WWW-Authenticate": "Bearer"})
+            request.app.state.browser_sessions.pop(session_id, None)
+    return None
+
+
+def require_same_origin(request: Request) -> None:
+    origin = request.headers.get("origin")
+    if origin and origin != f"{request.url.scheme}://{request.url.netloc}":
+        raise HTTPException(403, "请从当前应用页面操作")
+
+
+async def identity(request: Request, credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer)]):
+    if credentials:
+        actor = account_for_token(credentials.credentials, request.app.state.accounts)
+    else:
+        actor = browser_actor(request)
+        if actor and request.method not in {"GET", "HEAD", "OPTIONS"}:
+            require_same_origin(request)
+    if actor:
+        return actor
+    raise HTTPException(401, "请先登录或提供有效的账号令牌", headers={"WWW-Authenticate": "Bearer"})
 
 
 SignedIn = Annotated[Actor, Depends(identity)]

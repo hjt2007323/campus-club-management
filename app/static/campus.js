@@ -21,15 +21,21 @@ const labels = {
   affected: "征用待协调", superseded: "已换场",
 };
 const statusLabel = status => labels[status] || status;
+function statusBadge(status, label = statusLabel(status)) {
+  const badge = document.createElement("span");
+  badge.className = "status-pill status-" + status;
+  badge.textContent = label;
+  return badge;
+}
+
 const state = {
-  token: "", actor: null, clubs: [], activities: [], rooms: [],
+  actor: null, clubs: [], activities: [], rooms: [],
   managedClubs: [], managedActivities: [], reservations: [], blocks: [], registrations: [],
   coordination: null,
 };
 
-async function api(path, method = "GET", body, token = state.token) {
+async function api(path, method = "GET", body) {
   const headers = {};
-  if (token) headers.Authorization = "Bearer " + token;
   if (body !== undefined) headers["Content-Type"] = "application/json";
   const response = await fetch(path, {method, headers, body: body === undefined ? undefined : JSON.stringify(body)});
   const result = await response.json();
@@ -90,6 +96,7 @@ function labelOptions(id, data, label, prompt = "请选择") {
 function drawTable(target, columns, rows, empty = "暂无记录") {
   const container = typeof target === "string" ? el(target) : target;
   container.replaceChildren();
+  container.classList.toggle("empty-table", rows.length === 0);
   if (rows.length === 0) {
     container.textContent = empty;
     return;
@@ -122,6 +129,8 @@ function accountView() {
     element.hidden = !element.dataset.role.split(" ").some(item => access.includes(item));
   }
   el("logout").hidden = !state.actor;
+  el("account-link").textContent = state.actor ? "切换账号" : "登录";
+  el("account").dataset.signedIn = String(Boolean(state.actor));
   el("account").textContent = state.actor
     ? (role === "admin" ? "管理员" : "学生") + " · " + state.actor.id
     : "访客";
@@ -133,6 +142,7 @@ for (const tab of document.querySelectorAll("[data-tab]")) {
     for (const item of document.querySelectorAll("[data-tab]")) item.removeAttribute("aria-current");
     tab.setAttribute("aria-current", "page");
     if (!busy) feedback("");
+    window.scrollTo(0, 0);
   });
 }
 
@@ -142,33 +152,9 @@ function clearCoordination() {
   updateConfirm();
 }
 
-function resetPrivateViews() {
-  for (const id of ["annual-table", "roster-table", "credit-table", "evaluation-table",
-    "statistics-summary", "statistics-tables"]) el(id).replaceChildren();
-  labelOptions("annual-review-id", [], item => item.year);
-  labelOptions("attendance-student", [], item => item.id);
-  el("draft").reset();
-  el("venue-edit").reset();
-  clearCoordination();
-}
-
-form("login", async () => {
-  const token = value("token").trim();
-  const actor = await api("/me", "GET", undefined, token);
-  state.token = token;
-  state.actor = actor;
-  el("token").value = "";
-  resetPrivateViews();
-  await refresh();
-  return "已切换账号";
-});
 click("logout", async () => {
-  state.token = "";
-  state.actor = null;
-  el("token").value = "";
-  resetPrivateViews();
-  await refresh();
-  return "已退出账号";
+  await api("/session", "DELETE");
+  window.location.replace("/login");
 });
 
 function activityName(id) {
@@ -202,7 +188,7 @@ async function refresh() {
 
 function renderClubs() {
   drawTable("clubs-table", ["社团"], state.clubs.map(row => [row.name]));
-  drawTable("managed-clubs-table", ["社团", "状态"], state.managedClubs.map(row => [row.name, statusLabel(row.status)]));
+  drawTable("managed-clubs-table", ["社团", "状态"], state.managedClubs.map(row => [row.name, statusBadge(row.status)]));
   const approved = state.managedClubs.filter(row => row.status === "approved");
   const pending = state.managedClubs.filter(row => row.status === "pending");
   for (const id of ["draft-club", "annual-club", "annual-filter"]) labelOptions(id, approved, row => row.name);
@@ -214,14 +200,16 @@ function renderActivities() {
     state.activities.map(row => [
       row.plan.title, clubName(row.club_id), formatDate(row.schedule.starts_at),
       row.venue_name || (row.reservation_status === "affected" ? "征用待协调" : "待公布"),
-      row.registration_open ? "可报名" : (row.status === "completed" ? "已完成" : "报名已结束"),
+      row.registration_open ? statusBadge("active", "可报名") : (
+        row.status === "completed" ? statusBadge("completed") : statusBadge("draft", "报名已结束")
+      ),
     ]));
   drawTable("managed-activities-table", ["活动", "社团", "状态", "时间"],
     state.managedActivities.map(row => [
-      row.plan.title, clubName(row.club_id), statusLabel(row.status), formatDate(row.schedule?.starts_at),
+      row.plan.title, clubName(row.club_id), statusBadge(row.status), formatDate(row.schedule?.starts_at),
     ]));
   drawTable("registration-table", ["我的报名", "报名状态", "签到时间"],
-    state.registrations.map(row => [activityName(row.activity_id), statusLabel(row.status), formatDate(row.signed_at)]));
+    state.registrations.map(row => [activityName(row.activity_id), statusBadge(row.status), formatDate(row.signed_at)]));
   const managed = state.managedActivities;
   const drafts = managed.filter(row => ["draft", "rejected"].includes(row.status));
   const approved = managed.filter(row => row.status === "approved");
@@ -255,7 +243,7 @@ function renderVenues() {
   ]));
   drawTable("reservations-table", ["活动", "场地", "开始时间", "状态"],
     state.reservations.map(row => [
-      activityName(row.activity_id), roomName(row.venue_id), formatDate(row.starts_at), statusLabel(row.status),
+      activityName(row.activity_id), roomName(row.venue_id), formatDate(row.starts_at), statusBadge(row.status),
     ]));
   for (const id of ["venue-edit-id", "reserve-venue", "block-venues"]) {
     labelOptions(id, state.rooms, row => row.name + " · " + row.capacity + " 人", id === "venue-edit-id" ? "新增场地" : "请选择");
@@ -286,7 +274,7 @@ form("annual-submit", async () => {
 });
 async function loadAnnualReviews() {
   const records = await api("/clubs/" + idOf("annual-filter") + "/annual-reviews");
-  drawTable("annual-table", ["年份", "年审材料", "状态"], records.map(row => [row.year, row.materials, statusLabel(row.status)]));
+  drawTable("annual-table", ["年份", "年审材料", "状态"], records.map(row => [row.year, row.materials, statusBadge(row.status)]));
   labelOptions("annual-review-id", records.filter(row => row.status === "pending"), row => row.year + " 年");
 }
 el("annual-filter").addEventListener("change", () => {
@@ -565,4 +553,17 @@ form("statistics-load", async () => {
 });
 
 el("annual-year").value = new Date().getFullYear();
-refresh().catch(error => feedback(error.message, true));
+async function startDashboard() {
+  const session = await fetch("/me", {cache: "no-store"});
+  if (session.ok) {
+    state.actor = await session.json();
+  } else if (session.status !== 401) {
+    throw new Error("暂时无法读取账号状态，请刷新后重试。");
+  }
+  await refresh();
+}
+
+window.addEventListener("pageshow", event => {
+  if (event.persisted) window.location.reload();
+});
+startDashboard().catch(error => feedback(error.message, true));

@@ -15,16 +15,15 @@
       <span class="brand-mark" aria-hidden="true">社</span>
       <h1>高校社团活动全流程管理系统</h1>
     </div>
-    <form id="login" class="session-form">
-      <label class="visually-hidden" for="token">演示账号令牌</label>
-      <input id="token" type="password" class="form-control form-control-sm" placeholder="演示账号令牌" autocomplete="off" required>
-      <button type="submit" class="btn btn-light btn-sm">切换账号</button>
-      <button type="button" id="logout" class="btn btn-outline-light btn-sm" hidden>退出</button>
-    </form>
+    <div class="session-actions">
+      <div id="account" class="account" aria-live="polite">访客</div>
+      <a id="account-link" href="/login" class="btn btn-outline-primary btn-sm">登录</a>
+      <button type="button" id="logout" class="btn btn-sm logout-button" hidden>退出</button>
+    </div>
   </div>
 </header>
-<div class="workspace">
-  <div class="context">
+<div class="workspace dashboard">
+  <aside class="context">
     <nav aria-label="功能模块" class="module-nav">
       <button type="button" data-tab="clubs" aria-controls="clubs" aria-current="page">社团</button>
       <button type="button" data-tab="activities" aria-controls="activities">活动</button>
@@ -33,8 +32,8 @@
       <button type="button" data-tab="evaluations" aria-controls="evaluations">评价</button>
       <button type="button" data-tab="statistics" aria-controls="statistics">统计</button>
     </nav>
-    <div id="account" class="account">访客</div>
-  </div>
+  </aside>
+  <div class="main-content">
   <div id="feedback" role="status" aria-live="polite" hidden></div>
   <main>
     <section id="clubs" class="page">
@@ -52,6 +51,14 @@
 
     <section id="activities" class="page" hidden>
       <h2>活动管理</h2>
+      <div class="page-links" data-role="signed" hidden>
+        <a href="#registration" data-role="student">报名</a>
+        <a href="#draft" data-role="student">活动策划</a>
+        <a href="#activity-submit" data-role="student">提交审批</a>
+        <a href="#activity-review" data-role="admin">审批活动</a>
+        <a href="#attendance" data-role="admin">报名名单与签到</a>
+        <a href="#activity-complete" data-role="admin">确认完成</a>
+      </div>
       <section class="panel" ><h3>公开活动</h3><div id="activities-table" class="table-responsive"></div></section>
       <form id="registration" class="panel" data-role="student" hidden><h3>活动报名</h3><label class="field" for="register-activity"><span>活动</span><select class="form-select" id="register-activity" required></select></label><div class="controls"><button class="btn btn-primary" type="submit">报名</button><button id="cancel-registration" class="btn btn-outline-primary" type="button">取消报名</button></div><div id="registration-table" class="table-responsive"></div></form>
       <section class="panel" data-role="signed" hidden><h3>草稿与审批记录</h3><div id="managed-activities-table" class="table-responsive"></div></section>
@@ -64,9 +71,14 @@
 
     <section id="venues" class="page" hidden>
       <h2>场地管理</h2>
-      <section class="panel" ><h3>场地与设备</h3><div id="venues-table" class="table-responsive"></div></section>
+      <div class="page-links" data-role="admin" hidden>
+        <a href="#reservation-review">审批预约</a>
+        <a href="#venue-block">临时征用</a>
+        <a href="#venue-coordinate">换场协调</a>
+      </div>
       <form id="venue-edit" class="panel" data-role="admin" hidden><h3>维护场地</h3><label class="field" for="venue-edit-id"><span>场地</span><select class="form-select" id="venue-edit-id" ></select></label><div class="controls"><label class="field" for="venue-name"><span>场地名称</span><input id="venue-name" class="form-control" required maxlength="200"></label><label class="field" for="venue-capacity"><span>容量</span><input id="venue-capacity" class="form-control" required type="number" min="1"></label></div><label class="field" for="venue-equipment"><span>设备（每行一项）</span><textarea id="venue-equipment" class="form-control" rows="3"></textarea></label><button class="btn btn-primary" type="submit">保存场地</button></form>
       <form id="venue-reserve" class="panel" data-role="student" hidden><h3>申请场地</h3><div class="controls"><label class="field" for="reserve-activity"><span>已审批活动</span><select class="form-select" id="reserve-activity" required></select></label><button id="load-venue-options" class="btn btn-outline-primary" type="button">筛选可用场地</button></div><label class="field" for="reserve-venue"><span>预约场地</span><select class="form-select" id="reserve-venue" required></select></label><button class="btn btn-primary" type="submit">提交场地预约</button></form>
+      <section class="panel"><h3>场地与设备</h3><div id="venues-table" class="table-responsive"></div></section>
       <section class="panel" data-role="signed" hidden><h3>预约与征用状态</h3><div id="reservations-table" class="table-responsive"></div></section>
       <form id="reservation-review" class="panel" data-role="admin" hidden><h3>处理场地预约</h3><div class="controls"><label class="field" for="review-reservation"><span>预约</span><select class="form-select" id="review-reservation" required></select></label><label class="field" for="reservation-decision"><span>处理结果</span><select id="reservation-decision" class="form-select"><option value="approved">通过</option><option value="rejected">退回</option></select></label></div><button class="btn btn-primary" type="submit">处理预约</button></form>
       <form id="venue-block" class="panel" data-role="admin" hidden><h3>学校临时征用</h3><label class="field" for="block-venues"><span>征用场地（可多选）</span><select class="form-select" id="block-venues" multiple size="4" required></select></label><div class="controls"><label class="field" for="block-start"><span>开始时间</span><input id="block-start" class="form-control" required type="datetime-local"></label><label class="field" for="block-end"><span>结束时间</span><input id="block-end" class="form-control" required type="datetime-local"></label></div><label class="field" for="block-reason"><span>征用原因</span><textarea id="block-reason" class="form-control" required rows="2" maxlength="2000"></textarea></label><button class="btn btn-primary" type="submit">登记征用</button></form>
@@ -94,6 +106,7 @@
     </section>
   </main>
   <footer><a href="/docs">API 文档</a></footer>
+  </div>
 </div>
 </body>
 </html>

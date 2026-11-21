@@ -4,7 +4,7 @@
 
 ## 1. 架构
 
-系统以 FastAPI 单体运行。HTML、Bootstrap 和 JavaScript 通过 JSON 接口读取和提交数据。Pydantic 校验请求和 AI 返回，SQLAlchemy 管理 SQLite。令牌在服务器端环境配置，接口按账号验证权限。
+系统以 FastAPI 单体运行。HTML、Bootstrap 和 JavaScript 通过 JSON 接口读取和提交数据。Pydantic 校验请求和 AI 返回，SQLAlchemy 管理 SQLite。浏览器使用服务端登录会话，业务接口按账号验证权限。接口调用者可以使用环境配置的令牌。
 
 ```mermaid
 flowchart LR
@@ -24,7 +24,7 @@ flowchart LR
 | `app/services` | 场地准入、可用性检查及批量建议接口 |
 | `app/ai.py`、`app/prompts` | DeepSeek 请求、独立提示词、结构化响应校验 |
 | `app/models.py`、`app/database.py` | 表结构、会话及事务 |
-| `app/index.html`、`app/static` | 各角色的交互页面，Bootstrap 样式随项目分发 |
+| `app/login.html`、`app/index.html`、`app/static` | 独立登录页及各角色的工作台，Bootstrap 样式随项目分发 |
 
 ## 2. 数据设计
 
@@ -91,13 +91,13 @@ flowchart TD
 
 ## 6. 演示账号与数据
 
-用安装了依赖的虚拟环境启动演示，打开 `http://127.0.0.1:8765/`，在页面顶部用以下令牌登录。Windows 和 Linux 的启动命令见[操作说明书](user-manual.md#11-启动带数据的演示)。令牌只供本地演示服务使用。
+用安装了依赖的虚拟环境启动演示，打开 `http://127.0.0.1:8765/`。在独立页面选择账号并点击「进入工作台」。免密码选账号只适用于本地演示服务。Windows 和 Linux 的启动命令见[操作说明书](user-manual.md#11-启动带数据的演示)。
 
-| 令牌 | 账号及操作 |
-|---|---|
-| `demo-admin` | 管理员，审批、签到、场地征用及统计 |
-| `demo-student` | 编程社负责人兼学生，提交预约和查询个人学分 |
-| `demo-network` | 网络技术社负责人兼学生，演示独立社团和跨账号权限 |
+| 登录选项 | 账号及操作 | 演示接口令牌 |
+|---|---|---|
+| 校方管理员 | 审批、签到、场地征用及统计 | `demo-admin` |
+| 编程社负责人 | 提交预约和查询个人学分 | `demo-student` |
+| 网络技术社负责人 | 管理本社活动，演示独立社团和跨账号权限 | `demo-network` |
 
 SQLite 演示数据包含 20 个社团、120 场活动、40 个场地、50 条有效报名及一条已签到对应的学分记录。活动覆盖实践、竞赛、工作坊、讲座、交流及展演。数据由业务接口写入。
 

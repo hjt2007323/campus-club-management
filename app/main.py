@@ -4,27 +4,28 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, Request
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError, OperationalError, SQLAlchemyError
 
-from .access import SignedIn, configured_accounts
+from .access import SignedIn, browser_actor, configured_accounts
 from .database import Db, sqlite_engine
 from .models import Base
-from .routers import activities, clubs, outcomes, venues
+from .routers import activities, clubs, outcomes, session, venues
 
 logger = logging.getLogger(__name__)
 APP_DIR = Path(__file__).resolve().parent
 
 
-def create_app(database_url: str | None = None) -> FastAPI:
+def create_app(database_url: str | None = None, *, demo_login: bool = False) -> FastAPI:
     engine = sqlite_engine(database_url or os.getenv("DATABASE_URL", "sqlite:///campus.db"))
 
     @asynccontextmanager
     async def lifespan(app):
         try:
             app.state.accounts = configured_accounts()
+            app.state.browser_sessions = {}
             app.state.engine = engine
             Base.metadata.create_all(engine)
             yield
@@ -32,13 +33,21 @@ def create_app(database_url: str | None = None) -> FastAPI:
             engine.dispose()
 
     app = FastAPI(title="高校社团活动全流程管理系统", lifespan=lifespan)
+    app.state.demo_login = demo_login
     app.mount("/static", StaticFiles(directory=APP_DIR / "static"), name="static")
-    for router in (clubs.router, activities.router, venues.router, outcomes.router):
+    for router in (session.router, clubs.router, activities.router, venues.router, outcomes.router):
         app.include_router(router)
 
     @app.get("/", include_in_schema=False)
-    def homepage():
-        return FileResponse(APP_DIR / "index.html")
+    async def homepage(request: Request, guest: bool = False):
+        headers = {"Cache-Control": "no-store"}
+        if demo_login and not guest and browser_actor(request) is None:
+            return RedirectResponse("/login", status_code=303, headers=headers)
+        return FileResponse(APP_DIR / "index.html", headers=headers)
+
+    @app.get("/login", include_in_schema=False)
+    async def login_page():
+        return FileResponse(APP_DIR / "login.html", headers={"Cache-Control": "no-store"})
 
     @app.get("/health")
     def health(db: Db):

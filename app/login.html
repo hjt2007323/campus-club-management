@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>登录 · 高校社团活动全流程管理系统</title>
+  <link rel="stylesheet" href="/static/vendor/bootstrap.min.css">
+  <link rel="stylesheet" href="/static/campus.css">
+  <script src="/static/login.js" defer></script>
+</head>
+<body class="login-page">
+<main class="login-shell">
+  <div class="login-brand">
+    <span class="brand-mark" aria-hidden="true">社</span>
+    <p class="login-system-name">高校社团活动<br class="login-line-break">全流程管理系统</p>
+    <p class="login-brand-detail">活动策划、场地预约与校方审批</p>
+  </div>
+  <div class="login-content">
+    <h1 id="login-heading">登录工作台</h1>
+    <p id="login-intro" class="muted"></p>
+    <form id="login">
+      <fieldset id="login-choices" class="account-choices" hidden>
+        <legend class="visually-hidden">演示账号</legend>
+      </fieldset>
+      <label id="login-token-field" for="token" class="field" hidden>
+        <span>账号令牌</span>
+        <input id="token" class="form-control" type="password" autocomplete="off">
+      </label>
+      <p id="login-feedback" role="status" aria-live="polite" hidden></p>
+      <button id="continue" class="btn btn-primary" type="submit" disabled>进入工作台</button>
+    </form>
+    <a id="login-guest" class="guest-link" href="/?guest=1">访客浏览</a>
+  </div>
+</main>
+</body>
+</html>

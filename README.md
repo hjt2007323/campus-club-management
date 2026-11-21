@@ -16,7 +16,7 @@ $env:CAMPUS_STUDENT_TOKENS = @{ participant = $participantToken } | ConvertTo-Js
 .venv/Scripts/python.exe -m uvicorn app.main:app --log-level info
 ```
 
-打开 [系统主页](http://127.0.0.1:8000/) 或 [接口文档](http://127.0.0.1:8000/docs)。用对应令牌切换学生、管理员和参与者账号。学生提交社团申请后，管理员审核通过，该学生即可作为自己社团的负责人。额外学生可通过 `CAMPUS_STUDENT_TOKENS` 添加，键为稳定账号名，值为唯一令牌。请妥善保存账号令牌，防止其他人操作演示数据。
+打开 [系统主页](http://127.0.0.1:8000/) 或 [接口文档](http://127.0.0.1:8000/docs)。点击「登录」，在独立登录页输入对应令牌。学生的社团申请通过后，即可作为负责人办理该社团的活动。额外学生可通过 `CAMPUS_STUDENT_TOKENS` 添加，键为稳定账号名，值为唯一令牌。
 
 生成策划前，在运行服务的 PowerShell 会话中预先配置 `DEEPSEEK_API_KEY`。可用 `DEEPSEEK_MODEL` 指定模型，默认为 `deepseek-flash`。未配置密钥时仍可填写和人工保存活动草稿。项目默认在当前目录写入 `campus.db`，可用 `DATABASE_URL` 设定其他 SQLite 文件。
 
@@ -24,8 +24,8 @@ $env:CAMPUS_STUDENT_TOKENS = @{ participant = $participantToken } | ConvertTo-Js
 
 安装依赖后，在 Windows 项目目录运行 `.\.venv\Scripts\python.exe -m app.demo`，再打开 [演示页面](http://127.0.0.1:8765/)。脚本通过业务接口向独立的临时 SQLite 数据库写入 20 个社团、120 场活动、40 个场地和 50 条有效报名。场地包含普通教室、实验教室、舞台、报告厅及会议室。退出时清理。完整操作步骤和 Linux 启动方式见[系统操作说明书](docs/user-manual.md)。
 
-- 用 `demo-admin` 登录，在「场地 → 替代场地协调」选择「校级考试临时征用」，查看两场活动的自动建议并确认。在「统计」查询已写入的业务数据。
-- 用 `demo-student` 登录，在「场地 → 申请场地」选「网页设计入门课」，筛选可用场地并申请。在「学分」可查询 Python 入门工作坊的 1 学分。真实 AI 生成需要服务端配置 DeepSeek 密钥，演示数据本身不调用模型。
+- 在演示登录页选「校方管理员」，点「进入工作台」。在「场地 → 替代场地协调」选择「校级考试临时征用」，查看两场活动的建议并确认。
+- 在顶部点击「切换账号」，选「编程社负责人」，到「场地 → 申请场地」选「网页设计入门课」并筛选可用场地。也可在「学分」查询 Python 入门工作坊的 1 学分。真实 AI 生成需要服务端配置 DeepSeek 密钥。
 
 ## 从空数据库演示
 
@@ -56,4 +56,5 @@ Remove-Item Env:RUN_DEEPSEEK_LIVE
 - [需求分析报告草稿](docs/requirements-report.md)
 - [系统设计报告草稿](docs/design-report.md)
 - [系统操作说明书](docs/user-manual.md)
+- [Agent 审批与事件处理模板构想](docs/agent-template-design.md)
 - [TRAE 开发任务及留存时点](docs/trae-task.md)

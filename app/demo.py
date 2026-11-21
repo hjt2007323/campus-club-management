@@ -14,10 +14,7 @@ from .main import create_app
 from .times import current_time
 
 
-def main():
-    parser = argparse.ArgumentParser(description="启动本地课程演示")
-    parser.add_argument("--port", type=int, default=8765)
-    port = parser.parse_args().port
+def configure_demo_accounts():
     os.environ.update(
         CAMPUS_ADMIN_TOKEN="demo-admin",
         CAMPUS_STUDENT_TOKEN="demo-student",
@@ -26,11 +23,18 @@ def main():
             **{f"sample-{i:02}": f"demo-club-{i:02}" for i in range(1, 19)},
         }),
     )
+
+
+def main():
+    parser = argparse.ArgumentParser(description="启动本地课程演示")
+    parser.add_argument("--port", type=int, default=8765)
+    port = parser.parse_args().port
+    configure_demo_accounts()
     with TemporaryDirectory(prefix="campus-demo-") as directory:
         path = Path(directory, "demo.db").as_posix()
-        app = create_app(f"sqlite:///{path}")
+        app = create_app(f"sqlite:///{path}", demo_login=True)
         seed(app)
-        print(f"Demo: http://127.0.0.1:{port}  |  demo-admin / demo-student", flush=True)
+        print(f"Demo: http://127.0.0.1:{port}/login", flush=True)
         uvicorn.run(app, host="127.0.0.1", port=port)
 
 
@@ -167,4 +171,3 @@ def seed(app):
 
 if __name__ == "__main__":
     main()
-
