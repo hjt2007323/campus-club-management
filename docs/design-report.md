@@ -89,6 +89,20 @@ flowchart TD
 
 请求错误由接口返回可读反馈。模拟用例覆盖 DeepSeek 504 超时和 502 无效响应。并发预约、报名上限、重复签到和重复学分认定由隔离数据库验证。具体用例见[验收记录](acceptance.md)。
 
+## 6. 演示账号与数据
+
+运行 `python -m app.demo`，打开 `http://127.0.0.1:8765/`，在页面顶部用以下令牌登录。令牌只供本地演示服务使用。
+
+| 令牌 | 账号及操作 |
+|---|---|
+| `demo-admin` | 管理员，审批、签到、场地征用及统计 |
+| `demo-student` | 编程社负责人兼学生，提交预约和查询个人学分 |
+| `demo-network` | 网络技术社负责人兼学生，演示独立社团和跨账号权限 |
+
+SQLite 演示数据包含 2 个社团、12 场活动、4 个场地、5 条有效报名及一条已签到对应的学分记录。活动覆盖实践、竞赛、工作坊、讲座和交流。数据由业务接口写入。
+
+选题参考 [Kaggle Meta Kaggle Hackathon](https://www.kaggle.com/competitions/meta-kaggle-hackathon/data) 和 [GitHub Hack-HQ 活动目录](https://github.com/Hack-HQ/hackhq)，对应样例为校园数据分析挑战、校园游戏创作接力、校园开放数据实践和校园数据可视化工坊。这里只采用公开活动主题，校内社团、排期、场地、名额、报名、签到及学分均为模拟记录。TechEventsNearMe 的许可限制提取与重新分发数据，因此未导入该数据集。
+
 ## 附录 TRAE 开发记录
 
 两张证据原图随本地报告保留。

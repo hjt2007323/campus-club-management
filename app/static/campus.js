@@ -66,6 +66,7 @@ function action(id, eventName, handler) {
       if (isButton && target.id !== "confirm-coordination") target.disabled = false;
       updateConfirm();
       updateReservationControls();
+      updateAttendanceControls();
       busy = false;
     }
   });
@@ -225,7 +226,7 @@ function renderActivities() {
   const drafts = managed.filter(row => ["draft", "rejected"].includes(row.status));
   const approved = managed.filter(row => row.status === "approved");
   const currentActivities = state.activities.filter(row => row.registration_open);
-  const signedEvents = new Set(state.registrations.filter(row => row.signed_at).map(row => row.activity_id));
+  const signedEvents = new Set(state.registrations.filter(row => row.signed_at && !row.evaluated).map(row => row.activity_id));
   const bookingActivities = new Set(state.reservations.filter(row => activeBookings.has(row.status)).map(row => row.activity_id));
   const choices = {
     "draft-id": drafts,
@@ -233,17 +234,19 @@ function renderActivities() {
     "review-activity": managed.filter(row => row.status === "submitted"),
     "register-activity": currentActivities,
     "attendance-activity": managed.filter(row => ["approved", "completed"].includes(row.status)),
-    "complete-activity": approved,
+    "complete-activity": approved.filter(row => row.can_complete),
     "reserve-activity": currentActivities.filter(row => approved.some(item => item.id === row.id) && !bookingActivities.has(row.id)),
     "credit-activity": approved,
     "evaluation-activity": state.activities.filter(row => row.status === "completed" && signedEvents.has(row.id)),
     "evaluation-filter": managed.filter(row => row.status === "completed"),
   };
   for (const [id, options] of Object.entries(choices)) {
-    const prompt = id === "draft-id" ? "新建草稿"
-      : id === "reserve-activity" && !options.length ? "暂无可预约的活动" : "请选择";
+    const emptyLabels = {"reserve-activity": "暂无可预约的活动", "complete-activity": "暂无可完成的活动",
+      "evaluation-activity": "暂无待评价的活动"};
+    const prompt = id === "draft-id" ? "新建草稿" : (!options.length && emptyLabels[id]) || "请选择";
     labelOptions(id, options, row => row.plan.title, prompt);
   }
+  updateAttendanceControls();
 }
 
 function renderVenues() {
@@ -369,10 +372,25 @@ async function loadRoster() {
   const records = await api("/activities/" + idOf("attendance-activity") + "/registrations");
   drawTable("roster-table", ["学生", "签到时间"], records.map(row => [row.student_id, formatDate(row.signed_at)]));
   labelOptions("attendance-student", records.filter(row => !row.signed_at).map(row => ({id: row.student_id})), row => row.id);
+  updateAttendanceControls();
+}
+function updateAttendanceControls() {
+  const activity = state.managedActivities.find(row => row.id === Number(value("attendance-activity")));
+  const open = Boolean(activity?.can_check_in);
+  el("attendance-note").textContent = !activity ? "选择活动后可查询名单。"
+    : open ? "签到已开放，请选择有效报名的学生。" : "当前不在签到时段，仍可查看报名名单。";
+  el("attendance-student").disabled = !open;
+  el("attendance-submit").disabled = !open || !value("attendance-student");
+  el("activity-complete").querySelector('button[type="submit"]').disabled = !value("complete-activity");
+  el("evaluation-submit").querySelector('button[type="submit"]').disabled = !value("evaluation-activity");
+}
+for (const field of ["attendance-student", "complete-activity", "evaluation-activity"]) {
+  el(field).addEventListener("change", updateAttendanceControls);
 }
 el("attendance-activity").addEventListener("change", () => {
   el("roster-table").replaceChildren();
   labelOptions("attendance-student", [], row => row.id);
+  updateAttendanceControls();
 });
 click("load-roster", async () => {
   await loadRoster();
@@ -504,6 +522,7 @@ form("evaluation-submit", async () => {
     rating: Number(value("evaluation-rating")), comment: value("evaluation-comment"),
   });
   el("evaluation-comment").value = "";
+  await refresh();
   return "评价已提交";
 });
 form("evaluation-load", async () => {

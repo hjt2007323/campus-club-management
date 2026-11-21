@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from ..access import Admin, SignedIn, Student, get_activity, get_schedule, owned_club
 from ..database import Db, write_transaction
-from ..models import Activity, ActivitySchedule, Club, Registration, Reservation, Venue
+from ..models import Activity, ActivitySchedule, Club, Evaluation, Registration, Reservation, Venue
 from ..schemas import ActivityDecision, AttendanceInput, DraftChange, DraftInput, Plan, ScheduleInput
 from ..times import Now, timestamp, utc_value
 from .outcomes import award_credits, credit_recipient_count
@@ -114,11 +114,18 @@ def list_public_activities(db: Db, now: Now):
 
 
 @router.get("/managed/activities")
-def list_managed_activities(actor: SignedIn, db: Db):
+def list_managed_activities(actor: SignedIn, db: Db, now: Now):
     query = select(Activity, ActivitySchedule).outerjoin(ActivitySchedule).order_by(Activity.id)
     if actor.role == "student":
         query = query.join(Club, Activity.club_id == Club.id).where(Club.owner == actor.id)
-    return [activity_data(activity, schedule) for activity, schedule in db.execute(query)]
+    return [
+        {
+            **activity_data(activity, schedule),
+            "can_check_in": bool(schedule and activity.status == "approved" and schedule.starts_at <= now < schedule.ends_at),
+            "can_complete": bool(schedule and activity.status == "approved" and schedule.ends_at <= now),
+        }
+        for activity, schedule in db.execute(query)
+    ]
 
 
 def ensure_registration_open(db: Session, activity: Activity, now: datetime):
@@ -162,8 +169,17 @@ def cancel_registration(activity_id: int, actor: Student, db: Db, now: Now):
 
 @router.get("/me/registrations")
 def my_registrations(actor: Student, db: Db):
-    query = select(Registration).where(Registration.student_id == actor.id).order_by(Registration.activity_id)
-    return [registration_data(registration) for registration in db.scalars(query)]
+    query = (
+        select(Registration, Evaluation.activity_id)
+        .outerjoin(Evaluation, (Evaluation.activity_id == Registration.activity_id)
+                   & (Evaluation.student_id == Registration.student_id))
+        .where(Registration.student_id == actor.id)
+        .order_by(Registration.activity_id)
+    )
+    return [
+        {**registration_data(registration), "evaluated": evaluation_id is not None}
+        for registration, evaluation_id in db.execute(query)
+    ]
 
 
 @router.get("/activities/{activity_id}/registrations")
